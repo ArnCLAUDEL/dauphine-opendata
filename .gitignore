@@ -12,7 +12,6 @@ jaxws/jaxws-endpoint/src/main/webapp/WEB-INF/wsdl/
 .DS_Store
  
 *.class
-.sonar_token
  
 # Package Files #
 *.jar
@@ -103,3 +102,9 @@ derby.log
 ######################
 
 .factorypath
+
+######################
+# Custom
+# ####################
+.sonar_token
+.db.tuto
