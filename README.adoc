@@ -1,2 +1,26 @@
-# Dauphine Open Data image:https://travis-ci.com/ArnCLAUDEL/dauphine-opendata.svg?branch=master["Build Status", link="https://travis-ci.com/ArnCLAUDEL/dauphine-opendata"]
-Open Data Project for Dauphine M2 MIAGE
+# Dauphine Open Data image:https://travis-ci.com/ArnCLAUDEL/dauphine-opendata.svg?branch=master["Build Status", link="https://travis-ci.com/ArnCLAUDEL/dauphine-opendata"] image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=alert_status["Quality Gate"]
+
+## Sonar analysis
+
+image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=bugs["Bugs"]
+image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=vulnerabilities["Vulnerabilities"]  
+image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=code_smells["Code Smells"]
+
+image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=coverage["Coverage"]
+image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=duplicated_lines_density["Duplicated Lines"]
+
+## Authors
+
+* CLAUDEL Arnaud
+
+## Description
+
+L’université Paris-Dauphine crée et met à jour de nombreuses données publiques, qui sont parfois mises à disposition uniquement via son site web, voire parfois non mises à disposition et simplement conservées dans des bases de données.
+
+Le mouvement open data considère que les données bénéficient d’une exposition maximale, dans des formats facilement lisibles par des machines. Entre autres bénéfices, cette approche facilite la réutilisation et l’innovation.
+
+Ce projet a pour but de créer une plate-forme qui servira à la mise à disposition de certaines données publiques de Paris-Dauphine. Il visera à mettre également à disposition certaines données non publiques après authentification. Par exemple, un enseignant a droit d’accès aux adresses e-mail des étudiants qui suivent son cours, mais ces données ne sont pas publiques.
+
+## Existing functionalities
+
+## Incomming functionalities
