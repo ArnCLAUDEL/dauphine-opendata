@@ -5,8 +5,10 @@ notifications:
 addons:
   sonarcloud:
     organization: "arnclaudel-github"
+    secure:
+      token: $SONAR_TOKEN
 script:
-  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.login=${SONAR_TOKEN} -Dsonar.password=
+  - mvn clean org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar
 cache:
   directories:
   - "$HOME/.m2"
