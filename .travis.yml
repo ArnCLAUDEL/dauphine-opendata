@@ -1,5 +1,7 @@
 language: java
 jdk: oraclejdk8
+notifications:
+    slack: open-data-talk:mtISmEkmb4mOYBXCJCsWVjWC
 addons:
   sonarcloud:
     organization: "arnclaudel-github"
@@ -8,5 +10,3 @@ script:
 cache:
   directories:
   - "$HOME/.m2"
-notifications:
-    slack: open-data-talk:mtISmEkmb4mOYBXCJCsWVjWC  
