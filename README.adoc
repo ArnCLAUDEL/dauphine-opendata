@@ -1,0 +1,2 @@
+# Dauphine Open Data image:https://travis-ci.com/ArnCLAUDEL/dauphine-opendata.svg?branch=master["Build Status", link="https://travis-ci.com/ArnCLAUDEL/dauphine-opendata"]
+Open Data Project for Dauphine M2 MIAGE
