@@ -17,6 +17,101 @@ Le mouvement open data considère que les données bénéficient d’une exposit
 
 Ce projet a pour but de créer une plate-forme qui servira à la mise à disposition de certaines données publiques de Paris-Dauphine. Il visera à mettre également à disposition certaines données non publiques après authentification. Par exemple, un enseignant a droit d’accès aux adresses e-mail des étudiants qui suivent son cours, mais ces données ne sont pas publiques.
 
-## Existing functionalities
+## Tasks
 
-## Incoming functionalities
+ - Set up Slack.
+ - Set and link up Trevis to the project.
+ - Set and link up SonarQube to the project.
+ - Set up a database for use by the team for all the JPA entity objects.
+ - Create a graphical schema of the database. 
+ - Determine the dependencies between functionalities (i.e : to develop B, we need to do A)
+ - Study the existing code to find out which features are already partially or completely implemented.
+ - Figure out with the client what tasks to do during the next sprint and then assign them based on preference.
+
+## Projected Functionalities
+
+**Course**
+Objet Course pour représenter un cours de Dauphine. S’inspirer du modèle dans le projet existant et des informations contenues dans le Référentiel de l’Offre de Formation (ROF) de Dauphine au format CDM-fr (voir exemple XML), à simplifier éventuellement pour conserver l’information essentielle. Documenter vos choix. Permettre encodage d’un cours par une représentation textuelle. L’identifiant d’un cours doit être un String. (1)
+
+**Basics**
+
+Objets Person pour représenter un étudiant ou un enseignant (voir informations contenues dans l’ annuaire et dans ROF). Objet Planning pour représenter les liens horaires et liens entre cours et enseignant (tel enseignant a une séance de tel cours à telle heure). Voir informations contenues dans le planning en ligne de Dauphine (chercher Cailloux). Identifier une personne par son login Dauphine, un identifiant de 8 caractères. Documenter vos choix. (1)
+
+**Triple**
+
+Objet Triple contenant : (subject: String, predicate: String, object: String). (Plus : Gérez ces triplets avec une bibliothèque RDF.) Permettez encodage et décodage en texte (ou JSON), y compris d’une liste de tels triplets. (0,5)
+
+**VCal**
+
+Permettre encodage d’une ou plusieurs entrées de planning, au format VCal. Fournir des tests unitaires. (1)
+
+**VCard**
+
+Permettre encodage d’une ou plusieurs personnes, au format VCard. Fournir des tests unitaires. (1)
+
+**BasicServlets**
+
+getCourse(id): Course. getPerson(id Dauphine): Person (VCard). getPlanning(id Dauphine): VCal (toutes les entrées correspondant à cette personne). Ces données (supposées venir de Dauphine centrale) sont en lecture seule. On peut en outre associer une information à n’importe quel objet : addTriple(subject, predicate, object), où subject doit correspondre à un id d’un objet dans vos données ; removeTriple(subject, predicate, object) ; getData(subject): List<Triple<subject, predicate, object>>. (Vous vous arrangerez pour que tous les id dans votre modèle soient différents.) (1)
+
+**BasicClient**
+
+Implémenter un client qui permet, avec un GUI rudimentaire ou en ligne de commande, la visualisation des informations de base de Course et Person, et l’ajout de triplets associés. (1)
+
+**Lib**
+
+Isoler la partie bibliothèque du reste du code. La publier comme un projet Maven indépendant (suffixer le nom du projet de -lib) et faire dépendre le reste du code de cette bibliothèque. Isoler la partie client du reste du code, publier comme un projet indépendant (ProjectName-client). Publier la partie serveur comme un projet indépendant (ProjectName). (1,5)
+
+**ObjectsXML**
+
+Encoder / décoder une partie de vos objets du modèle en XML. Repartir du schéma CDM-fr, à simplifier éventuellement. (1)
+
+**ObjectsJSON**
+
+Encoder / décoder le reste de vos objets du modèle en JSON. (0,5)
+
+**ExtBasicServlets**
+
+Étendre servlets existants pour renvoyer à la demande du XML ou JSON en plus des formats déjà supportés. Transformer en JAX-RS. (1)
+
+**Gather**
+
+Récupérer les données depuis l’annuaire si elles ne sont pas déjà dans votre modèle, ou si elles sont trop vieilles, au moment de la requête. Votre modèle stocke ces données et leur date. (Parser le HTML selon le standard DOM.) Récupérer les informations du planning, selon la même approche. (1)
+
+**Online**
+
+Faire tourner le serveur en ligne grâce au service d’IBM. (1)
+
+**PIGateway**
+
+Offrir des servlets pour refléter les servlets offerts par le projet Poleinfo. Vos servlets relayent simplement les appels au serveur Poleinfo. Ils sont accessibles aux mêmes adresses que le projet Poleinfo mais avec le préfixe /PI. (On ne se contente pas de réécriture d’URL car ces services seront étendus par la suite.) (0,5)
+
+**SetDB1**
+
+Implémenter une entité JPA et les méthodes permettant d’écrire et de lire depuis la BD les cours et triplets. (1)
+
+**SetDB2**
+
+Même chose pour le reste du modèle : Person et Planning. (1)
+
+**UseDB**
+
+Modifier les servlets pour qu’ils écrivent dans et lisent la BD. (1)
+
+**SOAP**
+
+Transformer certains servlets pour en faire des services SOAP. (1)
+
+**SOAPClient**
+
+Transformer les clients pour en faire des clients SOAP. (1)
+
+**AuthDoc**
+
+Documenter en détail et clairement le mécanisme d’authentification sur le CAS de Dauphine. Le document, au format Asciidoc, doit être compréhensible par un étudiant ayant les prérequis pour ce cours mais non expert en programmation web. Illustrer avec une application de démo, de préférence de code ouvert, sur GitHub, si permis par la DSI. À effectuer en partenariat avec la DSI : contacter Jean-Christophe GAY, de ma part (contacts sur l’annuaire de Dauphine). (2)
+
+**Autres fonctionnalités**
+
+ - Mécanisme d’authentification en lien avec le CAS de Dauphine (en partenariat avec la DSI).
+ - Récupération des données de planning plus propres (en partenariat avec la DSI).
+ - Prise en compte des remarques suite à review code (sécurité & qualité) par la DSI.
+ - Menu du CROUS ? (Seulement trouvé ceci et menu utilisé précédemment.)
