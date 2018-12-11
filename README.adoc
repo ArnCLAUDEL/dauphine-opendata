@@ -26,7 +26,21 @@ Ce projet a pour but de créer une plate-forme qui servira à la mise à disposi
  - Create a graphical schema of the database. 
  - Determine the dependencies between functionalities (i.e : to develop B, we need to do A)
  - Study the existing code to find out which features are already partially or completely implemented.
- - Figure out with the client what tasks to do during the next sprint and then assign them based on preference.
+ - Figure out with the client what tasks to do during the next sprint and then assign them based on preference.   
+ 
+##  Planning
+
+### Itération 1
+ 
+ - Course
+ - Basics
+ - Triple
+ - VCal
+ - VCard
+ - BasicServlets
+ - lib
+ - Db
+
 
 ## Projected Functionalities
 
