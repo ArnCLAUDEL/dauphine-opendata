@@ -9,10 +9,6 @@ image:https://sonarcloud.io/api/project_badges/measure?project=io.github.olivier
 image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=coverage["Coverage", link="https://sonarcloud.io/dashboard?id=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent"]
 image:https://sonarcloud.io/api/project_badges/measure?project=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent&metric=duplicated_lines_density["Duplicated Lines", link="https://sonarcloud.io/dashboard?id=io.github.oliviercailloux.y2018%3Adauphine-opendata-parent"]
 
-## Authors
-
-* CLAUDEL Arnaud
-
 ## Description
 
 L’université Paris-Dauphine crée et met à jour de nombreuses données publiques, qui sont parfois mises à disposition uniquement via son site web, voire parfois non mises à disposition et simplement conservées dans des bases de données.
@@ -23,4 +19,4 @@ Ce projet a pour but de créer une plate-forme qui servira à la mise à disposi
 
 ## Existing functionalities
 
-## Incomming functionalities
+## Incoming functionalities
