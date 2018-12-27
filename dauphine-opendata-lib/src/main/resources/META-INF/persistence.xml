@@ -3,27 +3,18 @@
 	xmlns="http://xmlns.jcp.org/xml/ns/persistence"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/persistence http://xmlns.jcp.org/xml/ns/persistence/persistence_2_1.xsd">
-	<persistence-unit name="dauphine-opendata"
-		transaction-type="RESOURCE_LOCAL">
+	<persistence-unit name="dauphine-opendata" transaction-type="JTA">
 		<class>io.github.oliviercailloux.opendata.entity.Course</class>
-		<class>io.github.oliviercailloux.opendata.entity.CoursePart</class>
 		<class>io.github.oliviercailloux.opendata.entity.Lecture</class>
 		<class>io.github.oliviercailloux.opendata.entity.Person</class>
 		<class>io.github.oliviercailloux.opendata.entity.Planning</class>
 		<class>io.github.oliviercailloux.opendata.entity.Triple</class>
-		<exclude-unlisted-classes>false</exclude-unlisted-classes>
 		<properties>
 			<property
 				name="javax.persistence.schema-generation.database.action"
-				value="create" />
-			<property name="javax.persistence.jdbc.url"
-				value="jdbc:postgresql://localhost:5432/opendata" />
-			<property name="javax.persistence.jdbc.user"
-				value="postgres" />
-			<property name="javax.persistence.jdbc.password"
-				value="postgres" />
-			<property name="javax.persistence.jdbc.driver"
-				value="org.postgresql.Driver" />
+				value="drop-and-create" />
+			<property name="hibernate.show_sql" value="true" />
+			<property name="hibernate.format_sql" value="true" />
 		</properties>
 	</persistence-unit>
 </persistence>
