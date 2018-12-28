@@ -8,14 +8,15 @@ import io.github.oliviercailloux.opendata.entity.Planning;
 @Path("planning")
 public class PlanningResource extends AbstractResource<Planning, PlanningDao> {
 
-	private static final String PLANNING_NAME = "Planning";
+	private static final String RESOURCE_NAME = "Planning";
+	private static final String RESOURCE_PATH = "planning";
 
 	public PlanningResource(final PlanningDao dao) {
-		super(dao, PLANNING_NAME);
+		super(dao, RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 	public PlanningResource() {
-		super(PLANNING_NAME);
+		super(RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 }

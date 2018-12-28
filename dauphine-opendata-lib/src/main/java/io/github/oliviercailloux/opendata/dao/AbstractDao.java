@@ -8,6 +8,7 @@ import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
 import javax.transaction.NotSupportedException;
 import javax.transaction.RollbackException;
+import javax.transaction.Status;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
@@ -57,25 +58,38 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 
 	protected final void tryRollback(final UserTransaction transaction) throws DaoException {
 		try {
+			LOGGER.info("rollbacking transaction with status [{}]..", transaction.getStatus());
+			if (transaction.getStatus() == Status.STATUS_NO_TRANSACTION) {
+				LOGGER.warn("no active transaction, rollback aborted");
+				return;
+			}
 			transaction.rollback();
+			LOGGER.info("transaction rollbacked");
 		} catch (IllegalStateException | SecurityException | SystemException e) {
-			LOGGER.error("an error occured while doing a rollback", e);
-			throw new DaoException("an error occured doing a rollback", e);
+			LOGGER.error("an error occured during the rollback", e);
+			throw new DaoException("an error occured during the rollback", e);
 		}
 	}
 
 	protected final synchronized <R> R executeWithTransaction(final ExceptionalSupplier<R, DaoException> task)
 			throws DaoException {
 		try {
-			LOGGER.debug("beginning transaction ..");
+			LOGGER.info("beginning transaction ..");
 			userTransaction.begin();
+			LOGGER.info("executing the request ..");
 			final R result = task.get();
+			LOGGER.info("request executed");
 			userTransaction.commit();
-			LOGGER.debug("transaction completed ..");
+			LOGGER.info("transaction completed");
 			return result;
+		} catch (final DaoException e) {
+			LOGGER.error("an error occured during the request [{}], starting the rollback ..", e.getMessage());
+			LOGGER.debug("{}", e);
+			tryRollback(userTransaction);
+			throw e;
 		} catch (SecurityException | IllegalStateException | RollbackException | HeuristicMixedException
-				| HeuristicRollbackException | SystemException | PersistenceException | NotSupportedException e) {
-			LOGGER.error("an error occured during the transaction, doing rollback ..", e);
+				| HeuristicRollbackException | SystemException | NotSupportedException e) {
+			LOGGER.error("an error occured during the transaction, starting the rollback ..", e);
 			tryRollback(userTransaction);
 			throw new DaoException("an error occured during the transaction", e);
 		}
@@ -89,7 +103,7 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 	}
 
 	protected List<E> doFindAll() {
-		LOGGER.debug("finding all entities ..");
+		LOGGER.info("finding all entities ..");
 		return entityManager.createQuery("SELECT t FROM " + entityName + " t", entityClass).getResultList();
 	}
 
@@ -98,20 +112,28 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return executeWithTransaction(this::doFindAll);
 	}
 
-	protected E doFindOne(final long id) {
-		LOGGER.debug("finding entity with id [{}] ..", id);
+	protected E doFindOne(final Long id) {
+		LOGGER.info("finding entity with id [{}] ..", id);
+		if (id == null) {
+			LOGGER.warn("received id null, returning null value by default");
+			return null;
+		}
 		return entityManager.find(entityClass, id);
 	}
 
 	@Override
-	public E findOne(final long id) throws DaoException {
+	public E findOne(final Long id) throws DaoException {
 		return executeWithTransaction(() -> doFindOne(id));
 	}
 
-	protected E doPersist(final E entity) {
-		LOGGER.debug("creating entity with id [{}] ..", entity.getId());
-		entityManager.persist(entity);
-		return doFindOne(entity.getId());
+	protected E doPersist(final E entity) throws EntityAlreadyExistsDaoException {
+		LOGGER.info("creating entity with id [{}] ..", entity.getId());
+		try {
+			entityManager.persist(entity);
+			return doFindOne(entity.getId());
+		} catch (final PersistenceException e) {
+			throw new EntityAlreadyExistsDaoException(e);
+		}
 	}
 
 	@Override
@@ -120,7 +142,7 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 	}
 
 	protected E doMerge(final E entity) {
-		LOGGER.debug("merging entity with id [{}] ..", entity.getId());
+		LOGGER.info("merging entity with id [{}] ..", entity.getId());
 		entityManager.merge(entity);
 		return doFindOne(entity.getId());
 	}
@@ -130,35 +152,28 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return executeWithTransaction(() -> doMerge(entity));
 	}
 
-	protected E doMergeOrPersist(final E entity) {
-		if (doFindOne(entity.getId()) == null) {
-			LOGGER.debug("entity with id [{}] does not exist for the merge", entity.getId());
-			doPersist(entity);
-		} else {
-			doMerge(entity);
+	protected void doRemove(final Long id) throws EntityDoesNotExistDaoException {
+		LOGGER.info("removing entity with id [{}] ..", id);
+		if (id == null) {
+			LOGGER.error("trying to remove entity with a null id, removal aborted");
+			throw new EntityDoesNotExistDaoException("trying to remove an entity with a null id");
 		}
-		return doFindOne(entity.getId());
-	}
-
-	@Override
-	public E mergeOrPersist(final E entity) throws DaoException {
-		return executeWithTransaction(() -> doMergeOrPersist(entity));
-	}
-
-	protected void doRemove(final long id) {
-		LOGGER.debug("removing entity with id [{}] ..", id);
 		final E entity = doFindOne(id);
+		if (entity == null) {
+			LOGGER.error("entity [{}] does not exist, removal aborted", id);
+			throw new EntityDoesNotExistDaoException("entity with id [" + id + "] does not exist");
+		}
 		entityManager.remove(entity);
 	}
 
 	@Override
-	public void remove(final long id) throws DaoException {
+	public void remove(final Long id) throws DaoException {
 		executeWithTransaction(() -> doRemove(id));
 	}
 
 	@Override
 	public void flush() throws DaoException {
-		LOGGER.debug("flushing entity manager ..");
+		LOGGER.info("flushing entity manager ..");
 		executeWithTransaction(entityManager::flush);
 	}
 

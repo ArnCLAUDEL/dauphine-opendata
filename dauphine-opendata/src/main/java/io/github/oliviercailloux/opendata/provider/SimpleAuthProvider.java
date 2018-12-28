@@ -17,9 +17,13 @@ public class SimpleAuthProvider implements ContainerRequestFilter {
 	private static final Response NOT_AUTHORIZED_RESPONSE = Response
 			.status(HttpServletResponse.SC_FORBIDDEN, ERROR_MESSAGE).build();
 
+	private boolean isAuthorized(final ContainerRequestContext requestContext) {
+		return true || HttpMethod.GET.equals(requestContext.getMethod());
+	}
+
 	@Override
 	public void filter(final ContainerRequestContext requestContext) throws IOException {
-		if (!HttpMethod.GET.equals(requestContext.getMethod())) {
+		if (!isAuthorized(requestContext)) {
 			requestContext.abortWith(NOT_AUTHORIZED_RESPONSE);
 		}
 	}

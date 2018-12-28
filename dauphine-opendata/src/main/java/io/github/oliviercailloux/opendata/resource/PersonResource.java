@@ -8,14 +8,15 @@ import io.github.oliviercailloux.opendata.entity.Person;
 @Path("person")
 public class PersonResource extends AbstractResource<Person, PersonDao> {
 
-	private static final String PERSON_NAME = "Person";
+	private static final String RESOURCE_NAME = "Person";
+	private static final String RESOURCE_PATH = "person";
 
 	public PersonResource(final PersonDao dao) {
-		super(dao, PERSON_NAME);
+		super(dao, RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 	public PersonResource() {
-		super(PERSON_NAME);
+		super(RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 }

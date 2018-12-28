@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 
+import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -11,6 +12,8 @@ import javax.ws.rs.container.ContainerResponseContext;
 import javax.ws.rs.container.ContainerResponseFilter;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.ext.Provider;
+
+import com.google.common.base.Preconditions;
 
 @Provider
 @RequestScoped
@@ -21,6 +24,11 @@ public class ResponseHeaderProvider implements ContainerResponseFilter {
 
 	@Context
 	private HttpServletResponse response;
+
+	@PostConstruct
+	public void checkFieldInitialized() {
+		Preconditions.checkNotNull(response);
+	}
 
 	@Override
 	public void filter(final ContainerRequestContext requestContext, final ContainerResponseContext responseContext)

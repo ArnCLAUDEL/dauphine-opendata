@@ -8,14 +8,15 @@ import io.github.oliviercailloux.opendata.entity.Triple;
 @Path("triple")
 public class TripleResource extends AbstractResource<Triple, TripleDao> {
 
-	private static final String TRIPLE_NAME = "Triple";
+	private static final String RESOURCE_NAME = "Triple";
+	private static final String RESOURCE_PATH = "triple";
 
 	public TripleResource(final TripleDao dao) {
-		super(dao, TRIPLE_NAME);
+		super(dao, RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 	public TripleResource() {
-		super(TRIPLE_NAME);
+		super(RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 }

@@ -8,14 +8,15 @@ import io.github.oliviercailloux.opendata.entity.Lecture;
 @Path("lecture")
 public class LectureResource extends AbstractResource<Lecture, LectureDao> {
 
-	private static final String LECTURE_NAME = "Lecture";
+	private static final String RESOURCE_NAME = "Lecture";
+	private static final String RESOURCE_PATH = "lecture";
 
 	public LectureResource(final LectureDao dao) {
-		super(dao, LECTURE_NAME);
+		super(dao, RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 	public LectureResource() {
-		super(LECTURE_NAME);
+		super(RESOURCE_NAME, RESOURCE_PATH);
 	}
 
 }

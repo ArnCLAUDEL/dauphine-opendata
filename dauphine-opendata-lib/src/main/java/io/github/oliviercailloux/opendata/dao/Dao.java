@@ -29,21 +29,15 @@ public interface Dao<E extends Entity> {
 	 *
 	 * @throws DaoException If an error occurs during the transaction
 	 */
-	E findOne(long id) throws DaoException;
-
-	/**
-	 * Merges or persists the given entity if it does not exist.
-	 *
-	 * @return The merged or created entity
-	 * @throws DaoException If an error occurs during the transaction
-	 */
-	E mergeOrPersist(E entity) throws DaoException;
+	E findOne(Long id) throws DaoException;
 
 	/**
 	 * Persists the given entity.
 	 *
 	 * @return The created entity
-	 * @throws DaoException If an error occurs during the transaction
+	 * @throws EntityAlreadyExistsDaoException If the given entity already exists
+	 * @throws DaoException                    If an error occurs during the
+	 *                                         transaction
 	 */
 	E persist(E entity) throws DaoException;
 
@@ -58,14 +52,18 @@ public interface Dao<E extends Entity> {
 	/**
 	 * Removes the entity with the given id.
 	 *
-	 * @throws DaoException If an error occurs during the transaction
+	 * @throws EntityDoesNotExistDaoException If the entity does not exist
+	 * @throws DaoException                   If an error occurs during the
+	 *                                        transaction
 	 */
-	void remove(long id) throws DaoException;
+	void remove(Long id) throws DaoException;
 
 	/**
 	 * Removes the given entity.
 	 *
-	 * @throws DaoException If an error occurs during the transaction
+	 * @throws EntityDoesNotExistDaoException If the entity does not exist
+	 * @throws DaoException                   If an error occurs during the
+	 *                                        transaction
 	 */
 	default void remove(final E entity) throws DaoException {
 		remove(entity.getId());

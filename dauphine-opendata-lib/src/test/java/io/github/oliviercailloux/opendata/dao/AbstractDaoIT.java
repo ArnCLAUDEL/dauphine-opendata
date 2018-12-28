@@ -3,6 +3,7 @@ package io.github.oliviercailloux.opendata.dao;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 import java.util.List;
@@ -98,9 +99,22 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 
 	@Test
 	public void testPersist() throws DaoException {
-		final E persistedEntity = makeEntity();
+		final E e = makeEntity(false, false);
+		final E persistedEntity = dao.persist(e);
+		entitiesToDelete.add(persistedEntity);
 		final E foundEntity = dao.findOne(persistedEntity.getId());
 		assertEquals("not the same course", persistedEntity, foundEntity);
+	}
+
+	@Test
+	public void testPersistAlreadyExists() throws DaoException {
+		final E persistedEntity = makeEntity();
+		try {
+			dao.persist(persistedEntity);
+			fail("the persist did not failed");
+		} catch (final EntityAlreadyExistsDaoException e) {
+			// expected exception
+		}
 	}
 
 	@Test
@@ -114,20 +128,14 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 	}
 
 	@Test
-	public void testMergeNoPersist() throws DaoException {
-		final E persistedEntity = makeEntity();
-		final E foundEntity = dao.findOne(persistedEntity.getId());
-		assertEquals("not the same course before changing name", persistedEntity, foundEntity);
-		final E changedEntity = changeEntity(foundEntity);
-		final E foundEntity2 = dao.mergeOrPersist(changedEntity);
-		assertEquals("entity was not changed", changedEntity, foundEntity2);
-	}
-
-	@Test
-	public void testPersistNoMerge() throws DaoException {
-		final E persistedEntity = dao.mergeOrPersist(makeEntity());
-		final E foundEntity = dao.findOne(persistedEntity.getId());
-		assertEquals("not the same course", persistedEntity, foundEntity);
+	public void testRemoveNotExistingEntity() throws DaoException {
+		final E notPersistedEntity = makeEntity(false, false);
+		try {
+			dao.remove(notPersistedEntity);
+			fail("the removal did not failed");
+		} catch (final EntityDoesNotExistDaoException e) {
+			// expected exception
+		}
 	}
 
 	@Test
@@ -136,7 +144,7 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 		final E foundEntity = dao.findOne(persistedEntity.getId());
 		assertEquals("not the same course", persistedEntity, foundEntity);
 		dao.remove(foundEntity);
-		final E deletedEntity = dao.findOne(persistedEntity.getId());
+		final E deletedEntity = dao.findOne(foundEntity.getId());
 		assertNull("course was not deleted", deletedEntity);
 	}
 
