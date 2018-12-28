@@ -11,8 +11,8 @@
 	</parent>
 
 	<artifactId>dauphine-opendata-lib</artifactId>
+	<packaging>jar</packaging>
 
 	<name>Dauphine Open Data Lib</name>
 	<description>Common lib with entities and utility classes</description>
-
 </project>

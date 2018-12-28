@@ -1,5 +1,13 @@
 package io.github.oliviercailloux.opendata.dao;
 
+/**
+ * General exception thrown by most methods of {@link Dao}.<br />
+ * This exception usually indicates that an error occurred during the
+ * transaction.
+ *
+ * @author Dauphine - CLAUDEL Arnaud
+ *
+ */
 public class DaoException extends Exception {
 
 	private static final long serialVersionUID = 2180204496566733357L;

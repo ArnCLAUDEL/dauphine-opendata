@@ -19,15 +19,11 @@ public class Planning extends AbstractEntity {
 	@Id
 	@GeneratedValue(strategy = GenerationType.AUTO)
 	@XmlElement
-	private long id;
+	private Long id;
 
 	@Override
-	public long getId() {
+	public Long getId() {
 		return id;
-	}
-
-	public void setId(final long id) {
-		this.id = id;
 	}
 
 }

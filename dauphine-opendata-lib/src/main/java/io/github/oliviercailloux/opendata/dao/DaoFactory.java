@@ -1,7 +1,7 @@
 package io.github.oliviercailloux.opendata.dao;
 
 import javax.annotation.PostConstruct;
-import javax.enterprise.context.ApplicationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
@@ -10,7 +10,13 @@ import javax.transaction.UserTransaction;
 
 import com.google.common.base.Preconditions;
 
-@ApplicationScoped
+/**
+ * Factory of {@link Dao} implementations.<br />
+ *
+ * @author Dauphine - CLAUDEL Arnaud
+ *
+ */
+@RequestScoped
 public class DaoFactory {
 
 	@PersistenceContext
@@ -18,6 +24,15 @@ public class DaoFactory {
 
 	@Inject
 	private UserTransaction userTransaction;
+
+	public DaoFactory(final EntityManager entityManager, final UserTransaction userTransaction) {
+		this.entityManager = Preconditions.checkNotNull(entityManager);
+		this.userTransaction = Preconditions.checkNotNull(userTransaction);
+	}
+
+	public DaoFactory() {
+		// empty to enable proxy class
+	}
 
 	@PostConstruct
 	private void assertFieldInjected() {

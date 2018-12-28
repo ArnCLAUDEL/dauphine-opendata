@@ -29,16 +29,16 @@ import io.github.oliviercailloux.opendata.util.ExceptionalSupplier;
 @RequestScoped
 @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-public class AbstractResource<E extends Entity> {
+public class AbstractResource<E extends Entity, D extends Dao<E>> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractResource.class);
 
 	@Inject
-	protected Dao<E> dao;
+	protected D dao;
 
 	protected final String resourceName;
 
-	public AbstractResource(final Dao<E> dao, final String resourceName) {
+	public AbstractResource(final D dao, final String resourceName) {
 		this.dao = Preconditions.checkNotNull(dao);
 		this.resourceName = Preconditions.checkNotNull(resourceName);
 	}
@@ -48,7 +48,7 @@ public class AbstractResource<E extends Entity> {
 		// DAO will be set by injection
 	}
 
-	public void setDao(final Dao<E> dao) {
+	public void setDao(final D dao) {
 		this.dao = Preconditions.checkNotNull(dao);
 	}
 

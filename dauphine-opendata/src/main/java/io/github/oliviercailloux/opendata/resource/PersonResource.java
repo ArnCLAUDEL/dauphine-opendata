@@ -2,15 +2,15 @@ package io.github.oliviercailloux.opendata.resource;
 
 import javax.ws.rs.Path;
 
-import io.github.oliviercailloux.opendata.dao.Dao;
+import io.github.oliviercailloux.opendata.dao.PersonDao;
 import io.github.oliviercailloux.opendata.entity.Person;
 
 @Path("person")
-public class PersonResource extends AbstractResource<Person> {
+public class PersonResource extends AbstractResource<Person, PersonDao> {
 
 	private static final String PERSON_NAME = "Person";
 
-	public PersonResource(final Dao<Person> dao) {
+	public PersonResource(final PersonDao dao) {
 		super(dao, PERSON_NAME);
 	}
 
