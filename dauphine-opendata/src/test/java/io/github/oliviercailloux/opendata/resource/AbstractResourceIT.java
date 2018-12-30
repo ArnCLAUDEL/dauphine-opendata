@@ -1,46 +1,58 @@
 package io.github.oliviercailloux.opendata.resource;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Locale;
 import java.util.Scanner;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 import org.jboss.resteasy.client.jaxrs.ResteasyClientBuilder;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.After;
-import org.junit.Ignore;
+import org.junit.Test;
 
 import com.google.common.base.Preconditions;
 
 import io.github.oliviercailloux.opendata.TestUtils;
-import io.github.oliviercailloux.opendata.entity.Entity;
+import io.github.oliviercailloux.opendata.dao.Dao;
+import io.github.oliviercailloux.opendata.dao.DaoException;
 
-@Ignore
-public abstract class AbstractResourceIT {
+public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.opendata.entity.Entity, D extends Dao<E>> {
 
 	protected static final String WAR_NAME = "resource-it-war";
 	protected static final String BASE_URL = "http://localhost:8888/" + WAR_NAME + "/resource/";
 
 	protected final Client client;
+	protected final String resourcePath;
+	protected D dao;
 
-	public AbstractResourceIT(final Client client) {
+	public AbstractResourceIT(final Client client, final String resourcePath) {
 		this.client = Preconditions.checkNotNull(client);
+		this.resourcePath = Preconditions.checkNotNull(resourcePath);
 	}
 
-	public AbstractResourceIT() {
-		this(ResteasyClientBuilder.newClient());
+	public AbstractResourceIT(final String resourcePath) {
+		this(ResteasyClientBuilder.newClient(), resourcePath);
+	}
+
+	public void setDao(final D dao) {
+		this.dao = Preconditions.checkNotNull(dao);
 	}
 
 	@After
@@ -52,8 +64,18 @@ public abstract class AbstractResourceIT {
 		return TestUtils.makeWar(WAR_NAME);
 	}
 
+	protected abstract GenericType<List<E>> getEntitiesType();
+
 	protected WebTarget getWebTarget() {
 		return client.target(BASE_URL);
+	}
+
+	protected WebTarget getResourceWebTarget() {
+		return getWebTarget().path(resourcePath);
+	}
+
+	protected WebTarget getResourceWebTarget(final String path) {
+		return getResourceWebTarget().path(path);
 	}
 
 	protected WebTarget getWebTarget(final String path) {
@@ -92,17 +114,17 @@ public abstract class AbstractResourceIT {
 	}
 
 	protected Builder acceptJsonUTF8English(final String path) {
-		final Builder builder = getWebTarget(path).request();
+		final Builder builder = getResourceWebTarget(path).request();
 		acceptEnglish(builder);
 		acceptJson(builder);
 		acceptUTF8(builder);
 		return builder;
 	}
 
-	protected Builder acceptXmlUTF8English(final String path) {
-		final Builder builder = getWebTarget(path).request();
+	protected Builder acceptJsonUTF8English() {
+		final Builder builder = getResourceWebTarget().request();
 		acceptEnglish(builder);
-		acceptXml(builder);
+		acceptJson(builder);
 		acceptUTF8(builder);
 		return builder;
 	}
@@ -115,7 +137,8 @@ public abstract class AbstractResourceIT {
 		return new Scanner(new BufferedInputStream(getInputStream(response)));
 	}
 
-	protected <E extends Entity> E getEntity(final Response response, final Class<E> entityType) {
+	protected <T extends io.github.oliviercailloux.opendata.entity.Entity> T getEntity(final Response response,
+			final Class<T> entityType) {
 		response.bufferEntity();
 		return response.readEntity(entityType);
 	}
@@ -160,8 +183,86 @@ public abstract class AbstractResourceIT {
 		assertEquals("Body KO", expectedBody, getScanner(response).nextLine());
 	}
 
-	protected <E extends Entity> void assertEntityIs(final E expectedEntity, final Response response) {
+	protected <T extends io.github.oliviercailloux.opendata.entity.Entity> void assertEntityIs(final T expectedEntity,
+			final Response response) {
 		assertEquals("Entity KO", expectedEntity, getEntity(response, expectedEntity.getClass()));
+	}
+
+	protected abstract E makeEntity();
+
+	@Test
+	public void testGet() throws IOException, DaoException {
+		dao.persist(makeEntity());
+		dao.flush();
+		final List<E> entities = dao.findAll();
+		final Response response = acceptJsonUTF8English().get();
+		assertStatusIsOk(response);
+		assertContentTypeIsJsonUTF8(response);
+
+		response.bufferEntity();
+		final GenericType<List<E>> entitiesType = getEntitiesType();
+		final List<E> receivedEntities = response.readEntity(entitiesType);
+		assertEquals(receivedEntities, entities);
+	}
+
+	@Test
+	public void testGetId() throws IOException, DaoException {
+		final E c = makeEntity();
+		final E persistedEntity = dao.persist(c);
+		final Response response = acceptJsonUTF8English(persistedEntity.getId().toString()).get();
+		assertStatusIsOk(response);
+		assertContentTypeIsJsonUTF8(response);
+		assertEntityIs(persistedEntity, response);
+	}
+
+	@Test
+	public void testGetIdBadRequest() throws IOException, DaoException {
+		final Response response = acceptJsonUTF8English("abc").get();
+		assertStatusIsBadRequest(response);
+	}
+
+	@Test
+	public void testGetIdNotFound() throws IOException, DaoException {
+		final Response response = acceptJsonUTF8English("123456789").get();
+		assertStatusIsNotFound(response);
+	}
+
+	@Test
+	public void testPostAlreadyExists() throws DaoException {
+		final E c = makeEntity();
+		final E persistedEntity = dao.persist(c);
+		final Response response = acceptJsonUTF8English().post(Entity.json(persistedEntity));
+		assertStatusCodeIs(Status.CONFLICT.getStatusCode(), response);
+	}
+
+	@Test
+	public void testPutPersist() {
+		final E c = makeEntity();
+		final Response response = acceptJsonUTF8English().put(Entity.json(c));
+		assertStatusIsCreated(response);
+	}
+
+	@Test
+	public void testPutMerge() throws DaoException {
+		final E c = makeEntity();
+		final E persistedEntity = dao.persist(c);
+		final Response response = acceptJsonUTF8English().put(Entity.json(persistedEntity));
+		assertStatusIsNoContent(response);
+	}
+
+	@Test
+	public void testDelete() throws DaoException {
+		final E c = makeEntity();
+		final E persistedEntity = dao.persist(c);
+		final Response response = acceptJsonUTF8English(persistedEntity.getId().toString()).delete();
+		assertStatusIsNoContent(response);
+		assertNull("entity was not removed", dao.findOne(persistedEntity.getId()));
+	}
+
+	@Test
+	public void testDeleteNotExisting() throws DaoException {
+		final Response response = acceptJsonUTF8English("-1").delete();
+		assertStatusIsNotFound(response);
 	}
 
 }

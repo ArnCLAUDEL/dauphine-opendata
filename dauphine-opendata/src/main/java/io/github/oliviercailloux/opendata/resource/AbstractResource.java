@@ -29,6 +29,7 @@ import com.google.common.base.Preconditions;
 import io.github.oliviercailloux.opendata.dao.Dao;
 import io.github.oliviercailloux.opendata.dao.DaoException;
 import io.github.oliviercailloux.opendata.dao.EntityAlreadyExistsDaoException;
+import io.github.oliviercailloux.opendata.dao.EntityDoesNotExistDaoException;
 import io.github.oliviercailloux.opendata.entity.Entity;
 import io.github.oliviercailloux.opendata.util.ExceptionalSupplier;
 
@@ -100,6 +101,7 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 
 		final Optional<Long> parsedIdOpt = tryParseId(id);
 		if (!parsedIdOpt.isPresent()) {
+
 			return Response.status(Status.BAD_REQUEST).build();
 		}
 		final Long parsedId = parsedIdOpt.get();
@@ -128,7 +130,7 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	public Response put(final E entity) throws DaoException {
 		LOGGER.info("[{}] - merging entity [{}] ..", resourceName, entity);
 		if (dao.findOne(entity.getId()) == null) {
-			LOGGER.info("[{}] - entity does not exist, creating it ..", resourceName);
+			LOGGER.debug("[{}] - entity does not exist, creating it ..", resourceName);
 			final E persistedEntity = dao.persist(entity);
 			return Response.created(URI.create("/" + resourcePath + "/" + persistedEntity.getId())).build();
 		}
@@ -146,8 +148,13 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 			return Response.status(Status.BAD_REQUEST).build();
 		}
 		final Long parsedId = parsedIdOpt.get();
-		dao.remove(parsedId);
-		return Response.noContent().build();
+		try {
+			dao.remove(parsedId);
+			return Response.noContent().build();
+		} catch (final EntityDoesNotExistDaoException e) {
+			LOGGER.debug("[{}] - removal failed, entity [{}] does not exist", resourceName, id, e);
+			return Response.status(Status.NOT_FOUND).build();
+		}
 	}
 
 }

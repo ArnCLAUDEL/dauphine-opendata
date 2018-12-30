@@ -11,19 +11,19 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.junit.Before;
 import org.junit.runner.RunWith;
 
-import io.github.oliviercailloux.opendata.dao.CourseDao;
-import io.github.oliviercailloux.opendata.entity.Course;
+import io.github.oliviercailloux.opendata.dao.PlanningDao;
+import io.github.oliviercailloux.opendata.entity.Planning;
 
 @RunWith(Arquillian.class)
-public class CourseResourceIT extends AbstractResourceIT<Course, CourseDao> {
+public class PlanningResourceIT extends AbstractResourceIT<Planning, PlanningDao> {
 
 	@Inject
-	private CourseDao dao;
+	private PlanningDao dao;
 
-	public CourseResourceIT() {
-		super("course");
+	public PlanningResourceIT() {
+		super("planning");
 	}
-	
+
 	@Deployment
 	public static WebArchive makeWar() {
 		return AbstractResourceIT.makeWar();
@@ -35,13 +35,13 @@ public class CourseResourceIT extends AbstractResourceIT<Course, CourseDao> {
 	}
 
 	@Override
-	protected Course makeEntity() {
-		return new Course();
+	protected Planning makeEntity() {
+		return new Planning();
 	}
 
 	@Override
-	protected GenericType<List<Course>> getEntitiesType() {
-		return new GenericType<List<Course>>() {
+	protected GenericType<List<Planning>> getEntitiesType() {
+		return new GenericType<List<Planning>>() {
 			// no implementation required
 		};
 	}
