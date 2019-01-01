@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 import java.util.Scanner;
 
 import javax.servlet.http.HttpServletResponse;
@@ -35,6 +36,7 @@ import io.github.oliviercailloux.opendata.dao.DaoException;
 
 public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.opendata.entity.Entity, D extends Dao<E>> {
 
+	protected static final Random RAND = new Random(1L);
 	protected static final String WAR_NAME = "resource-it-war";
 	protected static final String BASE_URL = "http://localhost:8888/" + WAR_NAME + "/resource/";
 
@@ -236,9 +238,17 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	}
 
 	@Test
+	public void testPutAlreadyExists() throws DaoException {
+		final E c = makeEntity();
+		final E persistedEntity = dao.persist(c);
+		final Response response = acceptJsonUTF8English(c.getId().toString() + 1).put(Entity.json(persistedEntity));
+		assertStatusCodeIs(Status.FORBIDDEN.getStatusCode(), response);
+	}
+
+	@Test
 	public void testPutPersist() {
 		final E c = makeEntity();
-		final Response response = acceptJsonUTF8English().put(Entity.json(c));
+		final Response response = acceptJsonUTF8English(Long.toString(RAND.nextLong())).put(Entity.json(c));
 		assertStatusIsCreated(response);
 	}
 
@@ -246,7 +256,7 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	public void testPutMerge() throws DaoException {
 		final E c = makeEntity();
 		final E persistedEntity = dao.persist(c);
-		final Response response = acceptJsonUTF8English().put(Entity.json(persistedEntity));
+		final Response response = acceptJsonUTF8English(c.getId().toString()).put(Entity.json(persistedEntity));
 		assertStatusIsNoContent(response);
 	}
 

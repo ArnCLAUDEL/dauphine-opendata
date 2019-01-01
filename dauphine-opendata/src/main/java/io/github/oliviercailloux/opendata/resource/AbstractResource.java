@@ -74,7 +74,7 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 		try {
 			return Optional.of(Long.parseLong(id));
 		} catch (final NumberFormatException e) {
-			LOGGER.debug("[{}] - id [{}] cannot  be parsed..", resourceName, id, e);
+			LOGGER.info("[{}] - id [{}] cannot  be parsed..", resourceName, id, e);
 			return Optional.empty();
 		}
 	}
@@ -121,22 +121,35 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 			final E persistedEntity = dao.persist(entity);
 			return Response.created(URI.create("/" + resourcePath + "/" + persistedEntity.getId())).build();
 		} catch (final EntityAlreadyExistsDaoException e) {
-			LOGGER.debug("[{}] - entity [{}] already exist ..", resourceName, entity, e);
+			LOGGER.info("[{}] - entity [{}] already exist ..", resourceName, entity, e);
 			return Response.status(Status.CONFLICT).entity("entity already exists").build();
 		}
 	}
 
 	@PUT
-	public Response put(final E entity) throws DaoException {
-		LOGGER.info("[{}] - merging entity [{}] ..", resourceName, entity);
-		if (dao.findOne(entity.getId()) == null) {
-			LOGGER.debug("[{}] - entity does not exist, creating it ..", resourceName);
-			final E persistedEntity = dao.persist(entity);
-			return Response.created(URI.create("/" + resourcePath + "/" + persistedEntity.getId())).build();
+	@Path("{id}")
+	public Response put(@PathParam("id") final String id, final E entity) throws DaoException {
+		LOGGER.info("[{}] - merging entity with id [{}] ..", resourceName, id);
+		final Optional<Long> parsedIdOpt = tryParseId(id);
+		if (!parsedIdOpt.isPresent()) {
+			return Response.status(Status.BAD_REQUEST).build();
+		}
+		final Long parsedId = parsedIdOpt.get();
+
+		if (entity.getId() != null && entity.getId() != parsedId) {
+			LOGGER.warn("[{}] - the provided id is [{}] is different than the url one [{}]", resourceName,
+					entity.getId(), parsedId);
+			return Response.status(Status.FORBIDDEN).build();
 		}
 
-		dao.merge(entity);
-		return Response.noContent().build();
+		if (dao.findOne(parsedId) == null) {
+			LOGGER.info("[{}] - entity does not exist, creating it ..", resourceName);
+			final E persistedEntity = dao.persist(entity);
+			return Response.created(URI.create("/" + resourcePath + "/" + persistedEntity.getId())).build();
+		} else {
+			dao.merge(entity);
+			return Response.noContent().build();
+		}
 	}
 
 	@DELETE
@@ -152,7 +165,7 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 			dao.remove(parsedId);
 			return Response.noContent().build();
 		} catch (final EntityDoesNotExistDaoException e) {
-			LOGGER.debug("[{}] - removal failed, entity [{}] does not exist", resourceName, id, e);
+			LOGGER.info("[{}] - removal failed, entity [{}] does not exist", resourceName, id, e);
 			return Response.status(Status.NOT_FOUND).build();
 		}
 	}

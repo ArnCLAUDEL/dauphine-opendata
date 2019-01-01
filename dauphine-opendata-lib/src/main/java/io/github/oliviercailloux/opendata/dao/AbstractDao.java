@@ -127,7 +127,7 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 	}
 
 	protected E doPersist(final E entity) throws EntityAlreadyExistsDaoException {
-		LOGGER.info("creating entity with id [{}] ..", entity.getId());
+		LOGGER.info("creating entity [{}] ..", entity);
 		try {
 			entityManager.persist(entity);
 			return doFindOne(entity.getId());
