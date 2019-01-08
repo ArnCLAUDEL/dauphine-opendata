@@ -33,6 +33,25 @@ import io.github.oliviercailloux.opendata.dao.EntityDoesNotExistDaoException;
 import io.github.oliviercailloux.opendata.entity.Entity;
 import io.github.oliviercailloux.opendata.util.ExceptionalSupplier;
 
+/**
+ * Provides a base implementation for a JAX-RS resource class with a RESTful
+ * API.<br />
+ * The following request are already implemented :
+ * <ul>
+ * <li>GET /resource</li>
+ * <li>GET /resource/{id}</li>
+ * <li>POST /resource</li>
+ * <li>PUT /resource/{id}</li>
+ * <li>DELETE /resource/{id}</li>
+ * </ul>
+ * By default, every methods produce and consume JSON and XML.<br />
+ * Note that this resource class is request scoped.
+ *
+ * @author Dauphine - CLAUDEL Arnaud
+ *
+ * @param <E> The entity
+ * @param <D> The entity Dao
+ */
 @RequestScoped
 @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
@@ -43,33 +62,73 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	@Inject
 	protected D dao;
 
+	/**
+	 * The response to send for the current request.
+	 */
 	@Context
 	protected HttpServletResponse response;
 
+	/**
+	 * The name of the resource, mostly used for logging.
+	 */
 	protected final String resourceName;
 
+	/**
+	 * The path of the resource, used to build a URL.
+	 */
 	protected final String resourcePath;
 
+	/**
+	 * This constructor should not be used since this class requires field
+	 * injection.<br />
+	 *
+	 * @param resourceName The name of the resource, mostly used for logging
+	 * @param resourcePath The path of the resource, used to build a URL
+	 */
 	public AbstractResource(final String resourceName, final String resourcePath) {
-		this.resourceName = Preconditions.checkNotNull(resourceName);
-		this.resourcePath = Preconditions.checkNotNull(resourcePath);
-		// DAO will be set by injection
+		this.resourceName = Preconditions.checkNotNull(resourceName, "resourceName");
+		this.resourcePath = Preconditions.checkNotNull(resourcePath, "resourcePath");
+		// dao will be set by injection
 	}
 
-	public AbstractResource(final D dao, final String resourceName, final String resourcePath) {
-		this(resourceName, resourcePath);
-		this.dao = Preconditions.checkNotNull(dao);
-	}
-
+	/**
+	 * This setter should not be used and is only for field injection.
+	 *
+	 * @param dao The dao to use
+	 */
 	public void setDao(final D dao) {
-		this.dao = Preconditions.checkNotNull(dao);
+		this.dao = Preconditions.checkNotNull(dao, "dao");
 	}
 
+	/**
+	 * Checks whether the field injection worked.
+	 *
+	 * @throws NullPointerException If a field is null
+	 */
 	@PostConstruct
 	public void checkFieldInitialized() {
-		Preconditions.checkNotNull(dao);
+		Preconditions.checkNotNull(dao, "dao");
+		Preconditions.checkNotNull(response, "response");
 	}
 
+	/**
+	 * Makes a 201 - Created response with the location of the resource.<br />
+	 * The location is the following : /<tt>resourcePath</tt>/<tt>id</tt>.
+	 *
+	 * @param id The id of the created resource
+	 * @return The created response
+	 */
+	protected Response makeCreatedResponse(final Long id) {
+		return Response.created(URI.create("/" + resourcePath + "/" + id)).build();
+	}
+
+	/**
+	 * Tries to parse the id as a long and catches any thrown
+	 * {@link NumberFormatException}.
+	 *
+	 * @param id The id to parse
+	 * @return {@code Optional.empty()} if the exception was thrown
+	 */
 	protected Optional<Long> tryParseId(final String id) {
 		try {
 			return Optional.of(Long.parseLong(id));
@@ -79,6 +138,12 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 		}
 	}
 
+	/**
+	 * Tries to execute the given task and catches any thrown {@link DaoException}.
+	 *
+	 * @param task The task to execute
+	 * @return {@code Optional.empty()} if the exception was thrown
+	 */
 	protected <R> Optional<R> tryDaoTask(final ExceptionalSupplier<R, DaoException> task) {
 		try {
 			return Optional.of(task.get());
@@ -88,12 +153,27 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 		}
 	}
 
+	/**
+	 * Returns all elements of the current resource.
+	 *
+	 * @return all elements of the current resource
+	 * @throws DaoException If thrown by {@link Dao#findAll()}
+	 */
 	@GET
 	public List<E> get() throws DaoException {
 		LOGGER.info("[{}] - finding all entities ..", resourceName);
 		return dao.findAll();
 	}
 
+	/**
+	 * Returns the element of the current resource with the given id.<br />
+	 * - BAD_REQUEST if the id cannot be parsed as a long.<br />
+	 * - NOT_FOUND if the element does not exist.
+	 *
+	 * @param id The id of the element
+	 * @return Either a BAD_REQUEST, NOT_FOUND or OK response
+	 * @throws DaoException If thrown by {@link Dao#findOne(Long)}
+	 */
 	@GET
 	@Path("{id}")
 	public Response get(@PathParam("id") final String id) throws DaoException {
@@ -114,18 +194,41 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 		}
 	}
 
+	/**
+	 * Creates the given element of the current resource.<br />
+	 * - CREATED if the creation was successful.<br />
+	 * - CONFLICT if the element already exists.
+	 *
+	 * @param entity The entity to create
+	 * @return Either a CREATED or CONFLICT response
+	 * @throws DaoException If thrown by {@link Dao#persist(Entity)}
+	 */
 	@POST
 	public Response post(final E entity) throws DaoException {
 		LOGGER.info("[{}] - creating entity [{}] ..", resourceName, entity);
 		try {
 			final E persistedEntity = dao.persist(entity);
-			return Response.created(URI.create("/" + resourcePath + "/" + persistedEntity.getId())).build();
+			return makeCreatedResponse(persistedEntity.getId());
 		} catch (final EntityAlreadyExistsDaoException e) {
 			LOGGER.info("[{}] - entity [{}] already exist ..", resourceName, entity, e);
 			return Response.status(Status.CONFLICT).entity("entity already exists").build();
 		}
 	}
 
+	/**
+	 * Creates or updates the given element of the given id.<br />
+	 * - BAD_REQUEST if the id cannot be parsed as a long.<br />
+	 * - FORBIDDEN if the given element has a different id than the given one.<br />
+	 * - CREATED if the creation was successful. Note that a different id may be
+	 * used for the creation.<br />
+	 * - NO_CONTENT if the merge was successful.<br />
+	 *
+	 * @param id     The id of the resource to update
+	 * @param entity The element to create or merge
+	 * @return Either a BAD_REQUEST, FORBIDDEN, CREATED or NO_CONTENT response
+	 * @throws DaoException If thrown by wither {@link Dao#findOne(Long)} or
+	 *                      {@link Dao#merge(Entity)}
+	 */
 	@PUT
 	@Path("{id}")
 	public Response put(@PathParam("id") final String id, final E entity) throws DaoException {
@@ -145,13 +248,23 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 		if (dao.findOne(parsedId) == null) {
 			LOGGER.info("[{}] - entity does not exist, creating it ..", resourceName);
 			final E persistedEntity = dao.persist(entity);
-			return Response.created(URI.create("/" + resourcePath + "/" + persistedEntity.getId())).build();
+			return makeCreatedResponse(persistedEntity.getId());
 		} else {
 			dao.merge(entity);
 			return Response.noContent().build();
 		}
 	}
 
+	/**
+	 * Deletes the element with the given id.<br />
+	 * - BAD_REQUEST if the id cannot be parsed as a long.<br />
+	 * - NOT_FOUND if the element does not exist.<br />
+	 * - NO_CONTENT if the deletion was successful.<br />
+	 *
+	 * @param id The id of the element to remove
+	 * @return Either a BAD_REQUEST, NOT_FOUND or NO_CONTENT response.
+	 * @throws DaoException If thrown by {@link Dao#remove(Long)}
+	 */
 	@DELETE
 	@Path("{id}")
 	public Response delete(@PathParam("id") final String id) throws DaoException {

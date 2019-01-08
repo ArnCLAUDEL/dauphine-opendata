@@ -10,4 +10,10 @@
 		</configuration>
 	</container>
 
+	<!--container qualifier="widlfly-embedded" default="true"> <configuration> 
+		<property name="jbossHome">D:\Profiles\aclaudel\wildfly\wildfly-10.1.0.Final</property> 
+		<property name="modulePath">D:\Profiles\aclaudel\wildfly\wildfly-10.1.0.Final\modules</property> 
+		<property name="jbossArguments">-Djava.util.logging.manager=org.jboss.logmanager.LogManager</property> 
+		</configuration> </container -->
+
 </arquillian>

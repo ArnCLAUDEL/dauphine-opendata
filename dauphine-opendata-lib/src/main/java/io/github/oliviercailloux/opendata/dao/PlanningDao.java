@@ -7,6 +7,12 @@ import io.github.oliviercailloux.opendata.entity.Planning;
 
 public class PlanningDao extends AbstractDao<Planning> {
 
+	/**
+	 * This constructor expects both managed entity manager and user transaction.
+	 *
+	 * @param entityManager   A managed entity manager
+	 * @param userTransaction A managed user transaction
+	 */
 	public PlanningDao(final EntityManager entityManager, final UserTransaction userTransaction) {
 		super(entityManager, userTransaction, Planning.class, "Planning");
 	}

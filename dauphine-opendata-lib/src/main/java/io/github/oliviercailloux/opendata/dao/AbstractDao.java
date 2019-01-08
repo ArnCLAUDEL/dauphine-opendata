@@ -45,17 +45,43 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 
 	protected final EntityManager entityManager;
 	protected final UserTransaction userTransaction;
+
+	/**
+	 * The class of the entity, used with the entity manager.
+	 */
 	protected final Class<E> entityClass;
+
+	/**
+	 * The name of entity, should match with the table name since it is used to
+	 * build SQL query.
+	 */
 	protected final String entityName;
 
+	/**
+	 * This constructor expects both managed entity manager and user transaction.
+	 * 
+	 * @param entityManager   A managed entity manager
+	 * @param userTransaction A managed user transaction
+	 * @param entityClass     The class of the entity, used with the entity manager
+	 * @param entityName      The name of entity, should match with the table name
+	 *                        since it is used to build SQL query
+	 */
 	public AbstractDao(final EntityManager entityManager, final UserTransaction userTransaction,
 			final Class<E> entityClass, final String entityName) {
-		this.entityManager = Preconditions.checkNotNull(entityManager);
-		this.userTransaction = Preconditions.checkNotNull(userTransaction);
-		this.entityClass = Preconditions.checkNotNull(entityClass);
-		this.entityName = Preconditions.checkNotNull(entityName);
+		this.entityManager = Preconditions.checkNotNull(entityManager, "entityManager");
+		this.userTransaction = Preconditions.checkNotNull(userTransaction, "userTransaction");
+		this.entityClass = Preconditions.checkNotNull(entityClass, "entityClass");
+		this.entityName = Preconditions.checkNotNull(entityName, "entityName");
 	}
 
+	/**
+	 * Tries to rollback the given transaction.<br />
+	 * This does not fail if there is no active transaction.
+	 *
+	 * @param transaction The active transaction to rollback
+	 * @throws DaoException If an exception is thrown by
+	 *                      {@link UserTransaction#rollback()}
+	 */
 	protected final void tryRollback(final UserTransaction transaction) throws DaoException {
 		try {
 			LOGGER.info("rollbacking transaction with status [{}]..", transaction.getStatus());
@@ -71,6 +97,14 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		}
 	}
 
+	/**
+	 * Executes the given task into a transaction, commits it if no error occurs
+	 * else rollbacks it.<br />
+	 *
+	 * @param task The task to execute
+	 * @return The result of the successful task
+	 * @throws DaoException If any exception is thrown during the transaction
+	 */
 	protected final synchronized <R> R executeWithTransaction(final ExceptionalSupplier<R, DaoException> task)
 			throws DaoException {
 		try {
@@ -95,6 +129,13 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		}
 	}
 
+	/**
+	 * Delegates to {@link #executeWithTransaction(ExceptionalSupplier)}.
+	 *
+	 * @param task The task to execute
+	 * @throws DaoException If thrown by
+	 *                      {@link #executeWithTransaction(ExceptionalSupplier)}
+	 */
 	protected final void executeWithTransaction(final ExceptionalRunnable<DaoException> task) throws DaoException {
 		executeWithTransaction(() -> {
 			task.run();
@@ -112,10 +153,18 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return executeWithTransaction(this::doFindAll);
 	}
 
+	/**
+	 * Returns the entity with the given id.<br />
+	 * Note that it returns null if the given id is null.
+	 *
+	 * @param id The id of the entity
+	 * @return null if the entity does not exist or the given id is null
+	 */
 	protected E doFindOne(final Long id) {
 		LOGGER.info("finding entity with id [{}] ..", id);
 		if (id == null) {
 			LOGGER.warn("received id null, returning null value by default");
+			// TODO fail with NPE instead ?
 			return null;
 		}
 		return entityManager.find(entityClass, id);
@@ -126,6 +175,15 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return executeWithTransaction(() -> doFindOne(id));
 	}
 
+	/**
+	 * Persists the given entity.
+	 *
+	 * @param entity The entity to persist
+	 * @return The managed entity
+	 * @throws EntityAlreadyExistsDaoException If a {@link PersistenceException} is
+	 *                                         thrown by
+	 *                                         {@link EntityManager#persist(Object)}
+	 */
 	protected E doPersist(final E entity) throws EntityAlreadyExistsDaoException {
 		LOGGER.info("creating entity [{}] ..", entity);
 		try {
@@ -152,10 +210,18 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return executeWithTransaction(() -> doMerge(entity));
 	}
 
+	/**
+	 * Remove the entity with the given id.
+	 *
+	 * @param id The id of the entity to remove
+	 * @throws EntityDoesNotExistDaoException If the id is null or the entity does
+	 *                                        not exist
+	 */
 	protected void doRemove(final Long id) throws EntityDoesNotExistDaoException {
 		LOGGER.info("removing entity with id [{}] ..", id);
 		if (id == null) {
 			LOGGER.error("trying to remove entity with a null id, removal aborted");
+			// TODO fail with NPE instead ?
 			throw new EntityDoesNotExistDaoException("trying to remove an entity with a null id");
 		}
 		final E entity = doFindOne(id);

@@ -25,19 +25,18 @@ public class DaoFactory {
 	@Inject
 	private UserTransaction userTransaction;
 
-	public DaoFactory(final EntityManager entityManager, final UserTransaction userTransaction) {
-		this.entityManager = Preconditions.checkNotNull(entityManager);
-		this.userTransaction = Preconditions.checkNotNull(userTransaction);
-	}
-
+	/**
+	 * This constructor should not be used since this class requires field
+	 * injection.<br />
+	 */
 	public DaoFactory() {
-		// empty to enable proxy class
+		// empty to add a warning in the javadoc
 	}
 
 	@PostConstruct
 	private void assertFieldInjected() {
-		Preconditions.checkNotNull(entityManager);
-		Preconditions.checkNotNull(userTransaction);
+		Preconditions.checkNotNull(entityManager, "entityManager");
+		Preconditions.checkNotNull(userTransaction, "userTransaction");
 	}
 
 	@Produces

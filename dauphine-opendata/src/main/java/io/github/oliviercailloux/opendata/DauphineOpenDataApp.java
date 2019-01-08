@@ -15,6 +15,12 @@ import io.github.oliviercailloux.opendata.resource.PersonResource;
 import io.github.oliviercailloux.opendata.resource.PlanningResource;
 import io.github.oliviercailloux.opendata.resource.TripleResource;
 
+/**
+ * Defines the base path, resource classes and providers for JAX-RS.
+ *
+ * @author Dauphine - CLAUDEL Arnaud
+ *
+ */
 @ApplicationPath("resource")
 public class DauphineOpenDataApp extends Application {
 
