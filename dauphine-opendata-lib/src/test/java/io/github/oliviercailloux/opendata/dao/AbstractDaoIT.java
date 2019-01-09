@@ -1,12 +1,13 @@
 package io.github.oliviercailloux.opendata.dao;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import javax.inject.Inject;
 import javax.transaction.HeuristicMixedException;
@@ -128,9 +129,10 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 	public void testFindOne() throws Exception {
 		final E persistedEntity = makeEntity();
 		begin();
-		final E foundEntity = dao.findOne(persistedEntity.getId());
+		final Optional<E> foundEntityOpt = dao.findOne(persistedEntity.getId());
 		commit();
-		assertEquals("not the same course", persistedEntity, foundEntity);
+		assertTrue("no entity found", foundEntityOpt.isPresent());
+		assertEquals("not the same course", persistedEntity, foundEntityOpt.get());
 
 	}
 
@@ -142,9 +144,10 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 		commit();
 		entitiesToDelete.add(persistedEntity);
 		begin();
-		final E foundEntity = dao.findOne(persistedEntity.getId());
+		final Optional<E> foundEntityOpt = dao.findOne(persistedEntity.getId());
 		commit();
-		assertEquals("not the same course", persistedEntity, foundEntity);
+		assertTrue("no entity found", foundEntityOpt.isPresent());
+		assertEquals("not the same course", persistedEntity, foundEntityOpt.get());
 	}
 
 	@Test
@@ -168,9 +171,10 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 	public void testMerge() throws Exception {
 		final E persistedEntity = makeEntity();
 		begin();
-		final E foundEntity = dao.findOne(persistedEntity.getId());
-		assertEquals("not the same course before changing name", persistedEntity, foundEntity);
-		final E changedEntity = changeEntity(foundEntity);
+		final Optional<E> foundEntityOpt = dao.findOne(persistedEntity.getId());
+		assertTrue("no entity found", foundEntityOpt.isPresent());
+		assertEquals("not the same course before changing name", persistedEntity, foundEntityOpt.get());
+		final E changedEntity = changeEntity(foundEntityOpt.get());
 		final E foundEntity2 = dao.merge(changedEntity);
 		commit();
 		assertEquals("entity was not changed", changedEntity, foundEntity2);
@@ -196,13 +200,15 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 	public void testRemoveEntity() throws Exception {
 		final E persistedEntity = makeEntity(true, false);
 		begin();
-		final E foundEntity = dao.findOne(persistedEntity.getId());
+		final Optional<E> foundEntityOpt = dao.findOne(persistedEntity.getId());
+		assertTrue("no entity found", foundEntityOpt.isPresent());
+		final E foundEntity = foundEntityOpt.get();
 		assertEquals("not the same course", persistedEntity, foundEntity);
 		dao.remove(foundEntity.getId());
 		commit();
 		begin();
-		final E deletedEntity = dao.findOne(foundEntity.getId());
-		assertNull("course was not deleted", deletedEntity);
+		final Optional<E> deletedEntityOpt = dao.findOne(foundEntity.getId());
+		assertFalse("course was not deleted", deletedEntityOpt.isPresent());
 		commit();
 	}
 
@@ -210,13 +216,15 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 	public void testRemoveId() throws Exception {
 		final E persistedEntity = makeEntity(true, false);
 		begin();
-		final E foundEntity = dao.findOne(persistedEntity.getId());
+		final Optional<E> foundEntityOpt = dao.findOne(persistedEntity.getId());
+		assertTrue("no entity found", foundEntityOpt.isPresent());
+		final E foundEntity = foundEntityOpt.get();
 		assertEquals("not the same course", persistedEntity, foundEntity);
 		dao.remove(foundEntity.getId());
 		commit();
 		begin();
-		final E deletedEntity = dao.findOne(persistedEntity.getId());
-		assertNull("course was not deleted", deletedEntity);
+		final Optional<E> deletedEntityOpt = dao.findOne(foundEntity.getId());
+		assertFalse("course was not deleted", deletedEntityOpt.isPresent());
 		commit();
 	}
 

@@ -1,9 +1,9 @@
 package io.github.oliviercailloux.opendata.dao;
 
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,37 +61,22 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return entityManager.createQuery("SELECT t FROM " + entityName + " t", entityClass).getResultList();
 	}
 
-	/**
-	 * Returns the entity with the given id.<br />
-	 *
-	 * @param id The id of the entity, must not be null
-	 * @return null if the entity does not exist or the given id is null
-	 */
 	@Override
-	public E findOne(final Long id) {
+	public Optional<E> findOne(final Long id) {
 		LOGGER.info("finding entity with id [{}] ..", id);
 		Preconditions.checkNotNull(id, "cannot find an entity with a null id");
-		return entityManager.find(entityClass, id);
+		return Optional.ofNullable(entityManager.find(entityClass, id));
 	}
 
-	/**
-	 * Persists the given entity.
-	 *
-	 * @param entity The entity to persist, must not be null
-	 * @return The managed entity
-	 * @throws EntityAlreadyExistsDaoException If a {@link PersistenceException} is
-	 *                                         thrown by
-	 *                                         {@link EntityManager#persist(Object)}
-	 */
 	@Override
 	public E persist(final E entity) throws EntityAlreadyExistsDaoException {
 		LOGGER.info("creating entity [{}] ..", entity);
 		Preconditions.checkNotNull(entity, "cannot persist a null entity");
 
 		if (entity.getId() != null) {
-			final E existingEntity = findOne(entity.getId());
-			if (existingEntity != null) {
-				final String errorMessage = "entity with id [" + existingEntity.getId() + "] already exists";
+			final Optional<E> existingEntityOpt = findOne(entity.getId());
+			if (existingEntityOpt.isPresent()) {
+				final String errorMessage = "entity with id [" + existingEntityOpt.get().getId() + "] already exists";
 				LOGGER.error(errorMessage);
 				throw new EntityAlreadyExistsDaoException(errorMessage);
 			}
@@ -101,9 +86,6 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return entity;
 	}
 
-	/**
-	 * @param entity the entity to merge, must not be null
-	 */
 	@Override
 	public E merge(final E entity) {
 		LOGGER.info("merging entity with id [{}] ..", entity.getId());
@@ -111,24 +93,18 @@ public abstract class AbstractDao<E extends Entity> implements Dao<E> {
 		return entityManager.merge(entity);
 	}
 
-	/**
-	 * Remove the entity with the given id.
-	 *
-	 * @param id The id of the entity to remove, must not be null
-	 * @throws EntityDoesNotExistDaoException The entity does not exist
-	 */
 	@Override
 	public void remove(final Long id) throws EntityDoesNotExistDaoException {
 		LOGGER.info("removing entity with id [{}] ..", id);
 		Preconditions.checkNotNull(id, "cannot remove an entity with a null id");
 
-		final E entity = findOne(id);
-		if (entity == null) {
+		final Optional<E> entityOpt = findOne(id);
+		if (!entityOpt.isPresent()) {
 			final String errorMessage = "entity with id [" + id + "] does not exist";
 			LOGGER.error(errorMessage);
 			throw new EntityDoesNotExistDaoException(errorMessage);
 		}
-		entityManager.remove(entity);
+		entityManager.remove(entityOpt.get());
 	}
 
 	@Override

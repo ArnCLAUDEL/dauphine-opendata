@@ -46,8 +46,7 @@ import io.github.oliviercailloux.opendata.entity.Entity;
  * <li>PUT /resource/{id}</li>
  * <li>DELETE /resource/{id}</li>
  * </ul>
- * By default, every methods produce and consume JSON and XML.<br />
- * Note that this resource class is request scoped.
+ * By default, every method produces and consumes JSON and XML.<br />
  *
  * @author Dauphine - CLAUDEL Arnaud
  *
@@ -191,10 +190,10 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 		final Long parsedId = parsedIdOpt.get();
 
 		begin();
-		final E entity = dao.findOne(parsedId);
+		final Optional<E> entityOpt = dao.findOne(parsedId);
 		commit();
-		if (entity != null) {
-			return Response.ok(entity).build();
+		if (entityOpt.isPresent()) {
+			return Response.ok(entityOpt.get()).build();
 		} else {
 			return Response.status(Status.NOT_FOUND).build();
 		}

@@ -1,7 +1,7 @@
 package io.github.oliviercailloux.opendata.resource;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertFalse;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;
@@ -303,7 +303,7 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 		commit();
 		final Response response = acceptJsonUTF8English(persistedEntity.getId().toString()).delete();
 		assertStatusIsNoContent(response);
-		assertNull("entity was not removed", dao.findOne(persistedEntity.getId()));
+		assertFalse("entity was not removed", dao.findOne(persistedEntity.getId()).isPresent());
 	}
 
 	@Test

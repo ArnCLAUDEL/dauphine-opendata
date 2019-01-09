@@ -1,9 +1,7 @@
 package io.github.oliviercailloux.opendata.dao;
 
 /**
- * General exception thrown by most methods of {@link Dao}.<br />
- * This exception usually indicates that an error occurred during the
- * transaction.
+ * Root of exceptions thrown by {@link Dao} methods.
  *
  * @author Dauphine - CLAUDEL Arnaud
  *

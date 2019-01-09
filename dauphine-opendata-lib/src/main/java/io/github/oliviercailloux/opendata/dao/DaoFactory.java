@@ -28,8 +28,13 @@ public class DaoFactory {
 		// empty to add a warning in the javadoc
 	}
 
+	/**
+	 * Checks whether the field injection worked.
+	 *
+	 * @throws NullPointerException If a field is null
+	 */
 	@PostConstruct
-	private void assertFieldInjected() {
+	private void checkFieldInitialized() {
 		Preconditions.checkNotNull(entityManager, "entityManager");
 	}
 
