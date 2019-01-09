@@ -14,25 +14,4 @@
 
 	<name>Dauphine Open Data Lib</name>
 	<description>Common lib with entities and utility classes</description>
-
-	<dependencies>
-		<dependency>
-			<groupId>org.postgresql</groupId>
-			<artifactId>postgresql</artifactId>
-			<version>42.2.5</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.googlecode.ez-vcard</groupId>
-			<artifactId>ez-vcard</artifactId>
-			<version>0.10.4</version>
-		</dependency>
-
-		<dependency>
-			<groupId>net.sf.biweekly</groupId>
-			<artifactId>biweekly</artifactId>
-			<version>0.6.2</version>
-		</dependency>
-	</dependencies>
-
 </project>

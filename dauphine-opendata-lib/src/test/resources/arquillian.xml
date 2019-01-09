@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<arquillian xmlns="http://jboss.org/schema/arquillian"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://jboss.org/schema/arquillian http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+	<container qualifier="widlfly-remote">
+		<configuration>
+			<property name="managementAddress">127.0.0.1</property>
+			<property name="managementPort">8080</property>
+		</configuration>
+	</container>
+
+	<!--container qualifier="widlfly-embedded" default="true"> <configuration> 
+		<property name="jbossHome">D:\Profiles\aclaudel\wildfly\wildfly-10.1.0.Final</property> 
+		<property name="modulePath">D:\Profiles\aclaudel\wildfly\wildfly-10.1.0.Final\modules</property> 
+		<property name="jbossArguments">-Djava.util.logging.manager=org.jboss.logmanager.LogManager</property> 
+		</configuration> </container -->
+
+</arquillian>

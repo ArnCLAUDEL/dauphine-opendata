@@ -15,41 +15,48 @@
 	<modules>
 		<module>dauphine-opendata-lib</module>
 		<module>dauphine-opendata</module>
-		<module>dauphine-opendata-client</module>
 	</modules>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<version.wildfly>14.0.1.Final</version.wildfly>
+		<distrib.wildfly>distrib/wildfly/</distrib.wildfly>
+		<jboss.home>${distrib.wildfly}/wildfly-${version.wildfly}/</jboss.home>
+		<version.wildfly.maven.plugin>2.0.0.Final</version.wildfly.maven.plugin>
+		<version.plugin.resources>3.1.0</version.plugin.resources>
+		<unpack.wildfly.skip>false</unpack.wildfly.skip>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.jboss.arquillian</groupId>
+				<artifactId>arquillian-bom</artifactId>
+				<version>1.4.0.Final</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<version>5.1.0</version>
+			<groupId>org.jboss.shrinkwrap.resolver</groupId>
+			<artifactId>shrinkwrap-resolver-impl-maven</artifactId>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>org.junit.vintage</groupId>
-			<artifactId>junit-vintage-engine</artifactId>
-			<version>5.1.0</version>
+			<groupId>org.jboss.arquillian.junit</groupId>
+			<artifactId>arquillian-junit-container</artifactId>
 			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>org.junit.platform</groupId>
-			<artifactId>junit-platform-launcher</artifactId>
-			<version>1.1.0</version>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.junit.platform</groupId>
-			<artifactId>junit-platform-runner</artifactId>
-			<version>1.1.0</version>
+			<groupId>org.wildfly.arquillian</groupId>
+			<artifactId>wildfly-arquillian-container-remote</artifactId>
+			<version>2.1.1.Final</version>
 			<scope>test</scope>
 		</dependency>
 
@@ -57,12 +64,6 @@
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>27.0.1-jre</version>
-		</dependency>
-
-		<dependency>
-			<groupId>com.fasterxml.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>2.9.7</version>
 		</dependency>
 
 		<dependency>
@@ -75,13 +76,12 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-log4j12</artifactId>
 			<version>1.7.25</version>
-			<scope>test</scope>
 		</dependency>
 
 		<dependency>
-			<groupId>org.apache.logging.log4j</groupId>
-			<artifactId>log4j-core</artifactId>
-			<version>2.11.1</version>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
 		</dependency>
 
 		<dependency>
@@ -90,22 +90,100 @@
 			<version>8.0</version>
 			<scope>provided</scope>
 		</dependency>
-
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.12</version>
-			<scope>test</scope>
-		</dependency>
-
 	</dependencies>
 
 	<build>
 		<finalName>${project.artifactId}</finalName>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.codehaus.mojo</groupId>
+					<artifactId>tidy-maven-plugin</artifactId>
+					<version>1.1.0</version>
+					<executions>
+						<execution>
+							<id>validate</id>
+							<phase>validate</phase>
+							<goals>
+								<goal>check</goal>
+							</goals>
+						</execution>
+					</executions>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.17</version>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<version>3.0.0-M2</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack-wildfly</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<skip>${unpack.wildfly.skip}</skip>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.wildfly</groupId>
+									<artifactId>wildfly-dist</artifactId>
+									<version>${version.wildfly}</version>
+									<type>zip</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${distrib.wildfly}</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		
+			<!-- WildFly plugin to deploy war -->
+			<plugin>
+				<groupId>org.wildfly.plugins</groupId>
+				<artifactId>wildfly-maven-plugin</artifactId>
+				<version>${version.wildfly.maven.plugin}</version>
+				<configuration>
+					<jbossHome>${jboss.home}</jbossHome>
+				</configuration>
+				<executions>
+					<execution>
+						<id>pre-integration-phase</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>start</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>post-integration-phase</id>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>shutdown</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
