@@ -45,7 +45,7 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 
 	protected static final Random RAND = new Random(1L);
 	protected static final String WAR_NAME = "resource-it-war";
-	protected static final String BASE_URL = "http://localhost:8888/" + WAR_NAME + "/resource/";
+	protected static final String BASE_URL = "http://localhost:8080/" + WAR_NAME + "/resource/";
 
 	@Inject
 	private UserTransaction userTransaction;

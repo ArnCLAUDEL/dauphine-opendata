@@ -6,7 +6,7 @@
 	<container qualifier="widlfly-remote">
 		<configuration>
 			<property name="managementAddress">127.0.0.1</property>
-			<property name="managementPort">8888</property>
+			<property name="managementPort">8080</property>
 		</configuration>
 	</container>
 

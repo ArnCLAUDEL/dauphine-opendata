@@ -21,6 +21,12 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<version.wildfly>14.0.1.Final</version.wildfly>
+		<distrib.wildfly>distrib/wildfly/</distrib.wildfly>
+		<jboss.home>${distrib.wildfly}/wildfly-${version.wildfly}/</jboss.home>
+		<version.wildfly.maven.plugin>2.0.0.Final</version.wildfly.maven.plugin>
+		<version.plugin.resources>3.1.0</version.plugin.resources>
+		<unpack.wildfly.skip>false</unpack.wildfly.skip>
 	</properties>
 
 	<dependencyManagement>
@@ -121,6 +127,60 @@
 						<goals>
 							<goal>integration-test</goal>
 							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>unpack-wildfly</id>
+						<phase>generate-sources</phase>
+						<goals>
+							<goal>unpack</goal>
+						</goals>
+						<inherited>false</inherited>
+						<configuration>
+							<skip>${unpack.wildfly.skip}</skip>
+							<artifactItems>
+								<artifactItem>
+									<groupId>org.wildfly</groupId>
+									<artifactId>wildfly-dist</artifactId>
+									<version>${version.wildfly}</version>
+									<type>zip</type>
+									<overWrite>false</overWrite>
+									<outputDirectory>${distrib.wildfly}</outputDirectory>
+								</artifactItem>
+							</artifactItems>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		
+			<!-- WildFly plugin to deploy war -->
+			<plugin>
+				<groupId>org.wildfly.plugins</groupId>
+				<artifactId>wildfly-maven-plugin</artifactId>
+				<version>${version.wildfly.maven.plugin}</version>
+				<configuration>
+					<jbossHome>${jboss.home}</jbossHome>
+				</configuration>
+				<executions>
+					<execution>
+						<id>pre-integration-phase</id>
+						<phase>pre-integration-test</phase>
+						<goals>
+							<goal>start</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>post-integration-phase</id>
+						<phase>post-integration-test</phase>
+						<goals>
+							<goal>shutdown</goal>
 						</goals>
 					</execution>
 				</executions>
