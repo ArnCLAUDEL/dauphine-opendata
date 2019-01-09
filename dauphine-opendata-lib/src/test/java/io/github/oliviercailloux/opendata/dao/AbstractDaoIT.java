@@ -16,6 +16,7 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 
+import org.codehaus.plexus.util.ReflectionUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -178,6 +179,8 @@ public abstract class AbstractDaoIT<E extends Entity, D extends Dao<E>> {
 	@Test
 	public void testRemoveNotExistingEntity() throws Exception {
 		final E notPersistedEntity = makeEntity(false, false);
+		ReflectionUtils.setVariableValueInObject(notPersistedEntity, "id", 12345L);
+
 		try {
 			begin();
 			dao.remove(notPersistedEntity.getId());

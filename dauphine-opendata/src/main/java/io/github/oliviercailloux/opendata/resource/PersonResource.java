@@ -2,8 +2,8 @@ package io.github.oliviercailloux.opendata.resource;
 
 import javax.ws.rs.Path;
 
+import io.github.oliviercailloux.opendata.dao.PersonDao;
 import io.github.oliviercailloux.opendata.entity.Person;
-import io.github.oliviercailloux.opendata.service.GenericRestServices.PersonRestService;
 
 /**
  * Represents the resource class for the entity {@link Person}.
@@ -12,10 +12,10 @@ import io.github.oliviercailloux.opendata.service.GenericRestServices.PersonRest
  *
  */
 @Path("person")
-public class PersonResource extends AbstractResource<Person, PersonRestService> {
+public class PersonResource extends AbstractResource<Person, PersonDao> {
 
-	public static final String RESOURCE_NAME = "Person";
-	public static final String RESOURCE_PATH = "person";
+	private static final String RESOURCE_NAME = "Person";
+	private static final String RESOURCE_PATH = "person";
 
 	/**
 	 * This constructor should not be used since this class requires field

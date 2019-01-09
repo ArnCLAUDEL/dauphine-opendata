@@ -10,7 +10,7 @@ import org.jboss.shrinkwrap.resolver.api.maven.Maven;
 public class TestUtils {
 
 	public static WebArchive makeWar() {
-		final File[] libs = Maven.resolver().loadPomFromFile("pom.xml").importRuntimeDependencies().resolve()
+		final File[] libs = Maven.resolver().loadPomFromFile("pom.xml").importRuntimeAndTestDependencies().resolve()
 				.withTransitivity().asFile();
 
 		final JavaArchive jar = ShrinkWrap.create(JavaArchive.class)

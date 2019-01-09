@@ -22,14 +22,14 @@ public interface Dao<E extends Entity> {
 	 * @return All entities
 	 * @throws DaoException If an error occurs during the transaction
 	 */
-	List<E> findAll() throws DaoException;
+	List<E> findAll();
 
 	/**
 	 * Finds the entity with the given id.
 	 *
 	 * @throws DaoException If an error occurs during the transaction
 	 */
-	E findOne(Long id) throws DaoException;
+	E findOne(Long id);
 
 	/**
 	 * Persists the given entity.
@@ -39,7 +39,7 @@ public interface Dao<E extends Entity> {
 	 * @throws DaoException                    If an error occurs during the
 	 *                                         transaction
 	 */
-	E persist(E entity) throws DaoException;
+	E persist(E entity) throws EntityAlreadyExistsDaoException;
 
 	/**
 	 * Merges the given entity with the one in the DB.
@@ -47,7 +47,7 @@ public interface Dao<E extends Entity> {
 	 * @return The merged entity
 	 * @throws DaoException If an error occurs during the transaction
 	 */
-	E merge(E entity) throws DaoException;
+	E merge(E entity);
 
 	/**
 	 * Removes the entity with the given id.
@@ -56,12 +56,12 @@ public interface Dao<E extends Entity> {
 	 * @throws DaoException                   If an error occurs during the
 	 *                                        transaction
 	 */
-	void remove(Long id) throws DaoException;
+	void remove(Long id) throws EntityDoesNotExistDaoException;
 
 	/**
 	 * Flushes the underlying context.
 	 *
 	 * @throws DaoException If an error occurs during the transaction
 	 */
-	void flush() throws DaoException;
+	void flush();
 }
