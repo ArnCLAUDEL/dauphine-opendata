@@ -1,13 +1,10 @@
 package io.github.oliviercailloux.opendata.resource;
 
-import java.net.URI;
-import java.util.List;
 import java.util.Optional;
 
 import javax.annotation.PostConstruct;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
@@ -16,7 +13,6 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -28,10 +24,8 @@ import com.google.common.base.Preconditions;
 
 import io.github.oliviercailloux.opendata.dao.Dao;
 import io.github.oliviercailloux.opendata.dao.DaoException;
-import io.github.oliviercailloux.opendata.dao.EntityAlreadyExistsDaoException;
-import io.github.oliviercailloux.opendata.dao.EntityDoesNotExistDaoException;
 import io.github.oliviercailloux.opendata.entity.Entity;
-import io.github.oliviercailloux.opendata.util.ExceptionalSupplier;
+import io.github.oliviercailloux.opendata.service.RestService;
 
 /**
  * Provides a base implementation for a JAX-RS resource class with a RESTful
@@ -55,18 +49,12 @@ import io.github.oliviercailloux.opendata.util.ExceptionalSupplier;
 @RequestScoped
 @Produces({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
 @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML })
-public class AbstractResource<E extends Entity, D extends Dao<E>> {
+public class AbstractResource<E extends Entity, S extends RestService<E>> {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractResource.class);
 
 	@Inject
-	protected D dao;
-
-	/**
-	 * The response to send for the current request.
-	 */
-	@Context
-	protected HttpServletResponse response;
+	protected S service;
 
 	/**
 	 * The name of the resource, mostly used for logging.
@@ -79,25 +67,24 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	protected final String resourcePath;
 
 	/**
-	 * This constructor should not be used since this class requires field
-	 * injection.<br />
 	 *
+	 * @param dao          The dao to use
 	 * @param resourceName The name of the resource, mostly used for logging
 	 * @param resourcePath The path of the resource, used to build a URL
 	 */
 	public AbstractResource(final String resourceName, final String resourcePath) {
 		this.resourceName = Preconditions.checkNotNull(resourceName, "resourceName");
 		this.resourcePath = Preconditions.checkNotNull(resourcePath, "resourcePath");
-		// dao will be set by injection
+		// service will be set via injection
 	}
 
 	/**
 	 * This setter should not be used and is only for field injection.
 	 *
-	 * @param dao The dao to use
+	 * @param service The service to use
 	 */
-	public void setDao(final D dao) {
-		this.dao = Preconditions.checkNotNull(dao, "dao");
+	public void setService(final S service) {
+		this.service = Preconditions.checkNotNull(service, "service");
 	}
 
 	/**
@@ -107,19 +94,7 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	 */
 	@PostConstruct
 	public void checkFieldInitialized() {
-		Preconditions.checkNotNull(dao, "dao");
-		Preconditions.checkNotNull(response, "response");
-	}
-
-	/**
-	 * Makes a 201 - Created response with the location of the resource.<br />
-	 * The location is the following : /<tt>resourcePath</tt>/<tt>id</tt>.
-	 *
-	 * @param id The id of the created resource
-	 * @return The created response
-	 */
-	protected Response makeCreatedResponse(final Long id) {
-		return Response.created(URI.create("/" + resourcePath + "/" + id)).build();
+		Preconditions.checkNotNull(service, "service");
 	}
 
 	/**
@@ -139,30 +114,14 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	}
 
 	/**
-	 * Tries to execute the given task and catches any thrown {@link DaoException}.
-	 *
-	 * @param task The task to execute
-	 * @return {@code Optional.empty()} if the exception was thrown
-	 */
-	protected <R> Optional<R> tryDaoTask(final ExceptionalSupplier<R, DaoException> task) {
-		try {
-			return Optional.of(task.get());
-		} catch (final DaoException e) {
-			LOGGER.error("an error occured while retrieving the data", e);
-			return Optional.empty();
-		}
-	}
-
-	/**
 	 * Returns all elements of the current resource.
 	 *
 	 * @return all elements of the current resource
 	 * @throws DaoException If thrown by {@link Dao#findAll()}
 	 */
 	@GET
-	public List<E> get() throws DaoException {
-		LOGGER.info("[{}] - finding all entities ..", resourceName);
-		return dao.findAll();
+	public Response get() throws Exception {
+		return service.get();
 	}
 
 	/**
@@ -176,22 +135,16 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	 */
 	@GET
 	@Path("{id}")
-	public Response get(@PathParam("id") final String id) throws DaoException {
+	public Response get(@PathParam("id") final String id) throws Exception {
 		LOGGER.info("[{}] - finding entity with id [{}] ..", resourceName, id);
 
 		final Optional<Long> parsedIdOpt = tryParseId(id);
 		if (!parsedIdOpt.isPresent()) {
-
 			return Response.status(Status.BAD_REQUEST).build();
 		}
 		final Long parsedId = parsedIdOpt.get();
 
-		final E entity = dao.findOne(parsedId);
-		if (entity != null) {
-			return Response.ok(entity).build();
-		} else {
-			return Response.status(Status.NOT_FOUND).build();
-		}
+		return service.get(parsedId);
 	}
 
 	/**
@@ -204,15 +157,8 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	 * @throws DaoException If thrown by {@link Dao#persist(Entity)}
 	 */
 	@POST
-	public Response post(final E entity) throws DaoException {
-		LOGGER.info("[{}] - creating entity [{}] ..", resourceName, entity);
-		try {
-			final E persistedEntity = dao.persist(entity);
-			return makeCreatedResponse(persistedEntity.getId());
-		} catch (final EntityAlreadyExistsDaoException e) {
-			LOGGER.info("[{}] - entity [{}] already exist ..", resourceName, entity, e);
-			return Response.status(Status.CONFLICT).entity("entity already exists").build();
-		}
+	public Response post(final E entity) throws Exception {
+		return service.post(entity);
 	}
 
 	/**
@@ -231,7 +177,7 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	 */
 	@PUT
 	@Path("{id}")
-	public Response put(@PathParam("id") final String id, final E entity) throws DaoException {
+	public Response put(@PathParam("id") final String id, final E entity) throws Exception {
 		LOGGER.info("[{}] - merging entity with id [{}] ..", resourceName, id);
 		final Optional<Long> parsedIdOpt = tryParseId(id);
 		if (!parsedIdOpt.isPresent()) {
@@ -239,20 +185,13 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 		}
 		final Long parsedId = parsedIdOpt.get();
 
-		if (entity.getId() != null && entity.getId() != parsedId) {
+		if (entity.getId() == null || entity.getId() != null && entity.getId() != parsedId) {
 			LOGGER.warn("[{}] - the provided id is [{}] is different than the url one [{}]", resourceName,
 					entity.getId(), parsedId);
 			return Response.status(Status.FORBIDDEN).build();
 		}
 
-		if (dao.findOne(parsedId) == null) {
-			LOGGER.info("[{}] - entity does not exist, creating it ..", resourceName);
-			final E persistedEntity = dao.persist(entity);
-			return makeCreatedResponse(persistedEntity.getId());
-		} else {
-			dao.merge(entity);
-			return Response.noContent().build();
-		}
+		return service.put(parsedId, entity);
 	}
 
 	/**
@@ -267,20 +206,14 @@ public class AbstractResource<E extends Entity, D extends Dao<E>> {
 	 */
 	@DELETE
 	@Path("{id}")
-	public Response delete(@PathParam("id") final String id) throws DaoException {
+	public Response delete(@PathParam("id") final String id) throws Exception {
 		LOGGER.info("[{}] - removing entity with id [{}] ..", resourceName, id);
 		final Optional<Long> parsedIdOpt = tryParseId(id);
 		if (!parsedIdOpt.isPresent()) {
 			return Response.status(Status.BAD_REQUEST).build();
 		}
 		final Long parsedId = parsedIdOpt.get();
-		try {
-			dao.remove(parsedId);
-			return Response.noContent().build();
-		} catch (final EntityDoesNotExistDaoException e) {
-			LOGGER.info("[{}] - removal failed, entity [{}] does not exist", resourceName, id, e);
-			return Response.status(Status.NOT_FOUND).build();
-		}
+		return service.delete(parsedId);
 	}
 
 }

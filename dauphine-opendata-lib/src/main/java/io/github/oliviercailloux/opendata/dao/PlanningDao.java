@@ -1,20 +1,18 @@
 package io.github.oliviercailloux.opendata.dao;
 
 import javax.persistence.EntityManager;
-import javax.transaction.UserTransaction;
 
 import io.github.oliviercailloux.opendata.entity.Planning;
 
 public class PlanningDao extends AbstractDao<Planning> {
 
 	/**
-	 * This constructor expects both managed entity manager and user transaction.
+	 * This constructor expects both managed entity manager.
 	 *
-	 * @param entityManager   A managed entity manager
-	 * @param userTransaction A managed user transaction
+	 * @param entityManager A managed entity manager
 	 */
-	public PlanningDao(final EntityManager entityManager, final UserTransaction userTransaction) {
-		super(entityManager, userTransaction, Planning.class, "Planning");
+	public PlanningDao(final EntityManager entityManager) {
+		super(entityManager, Planning.class, "Planning");
 	}
 
 }

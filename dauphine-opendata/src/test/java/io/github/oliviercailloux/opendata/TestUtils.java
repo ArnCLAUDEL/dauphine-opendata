@@ -19,6 +19,7 @@ public class TestUtils {
 
 		final JavaArchive jar = ShrinkWrap.create(JavaArchive.class)
 				.addPackages(true, "io.github.oliviercailloux.opendata.resource")
+				.addPackages(true, "io.github.oliviercailloux.opendata.service")
 				.addPackages(true, "io.github.oliviercailloux.opendata.provider").addClass(DauphineOpenDataApp.class)
 				.addAsResource("arquillian.xml");
 

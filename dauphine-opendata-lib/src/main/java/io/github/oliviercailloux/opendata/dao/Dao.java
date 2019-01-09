@@ -59,17 +59,6 @@ public interface Dao<E extends Entity> {
 	void remove(Long id) throws DaoException;
 
 	/**
-	 * Removes the given entity.
-	 *
-	 * @throws EntityDoesNotExistDaoException If the entity does not exist
-	 * @throws DaoException                   If an error occurs during the
-	 *                                        transaction
-	 */
-	default void remove(final E entity) throws DaoException {
-		remove(entity.getId());
-	}
-
-	/**
 	 * Flushes the underlying context.
 	 *
 	 * @throws DaoException If an error occurs during the transaction

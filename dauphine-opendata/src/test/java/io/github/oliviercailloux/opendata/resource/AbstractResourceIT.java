@@ -12,7 +12,14 @@ import java.util.Locale;
 import java.util.Random;
 import java.util.Scanner;
 
+import javax.inject.Inject;
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation.Builder;
@@ -40,6 +47,8 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	protected static final String WAR_NAME = "resource-it-war";
 	protected static final String BASE_URL = "http://localhost:8888/" + WAR_NAME + "/resource/";
 
+	@Inject
+	private UserTransaction userTransaction;
 	protected final Client client;
 	protected final String resourcePath;
 	protected D dao;
@@ -58,7 +67,7 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	}
 
 	@After
-	public void closeClient() {
+	public void after() {
 		client.close();
 	}
 
@@ -67,6 +76,19 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	}
 
 	protected abstract GenericType<List<E>> getEntitiesType();
+
+	protected final void begin() throws NotSupportedException, SystemException {
+		userTransaction.begin();
+	}
+
+	protected final void commit() throws SecurityException, IllegalStateException, RollbackException,
+			HeuristicMixedException, HeuristicRollbackException, SystemException {
+		userTransaction.commit();
+	}
+
+	protected final void rollback() throws IllegalStateException, SecurityException, SystemException {
+		userTransaction.rollback();
+	}
 
 	protected WebTarget getWebTarget() {
 		return client.target(BASE_URL);
@@ -161,6 +183,10 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 		assertStatusCodeIs(HttpServletResponse.SC_NOT_FOUND, response);
 	}
 
+	protected void assertStatusIsForbidden(final Response response) {
+		assertStatusCodeIs(HttpServletResponse.SC_FORBIDDEN, response);
+	}
+
 	protected void assertStatusIsBadRequest(final Response response) {
 		assertStatusCodeIs(HttpServletResponse.SC_BAD_REQUEST, response);
 	}
@@ -193,9 +219,10 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	protected abstract E makeEntity();
 
 	@Test
-	public void testGet() throws IOException, DaoException {
+	public void testGet() throws Exception {
+		begin();
 		dao.persist(makeEntity());
-		dao.flush();
+		commit();
 		final List<E> entities = dao.findAll();
 		final Response response = acceptJsonUTF8English().get();
 		assertStatusIsOk(response);
@@ -208,9 +235,11 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	}
 
 	@Test
-	public void testGetId() throws IOException, DaoException {
+	public void testGetId() throws Exception {
 		final E c = makeEntity();
+		begin();
 		final E persistedEntity = dao.persist(c);
+		commit();
 		final Response response = acceptJsonUTF8English(persistedEntity.getId().toString()).get();
 		assertStatusIsOk(response);
 		assertContentTypeIsJsonUTF8(response);
@@ -230,17 +259,21 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	}
 
 	@Test
-	public void testPostAlreadyExists() throws DaoException {
+	public void testPostAlreadyExists() throws Exception {
 		final E c = makeEntity();
+		begin();
 		final E persistedEntity = dao.persist(c);
+		commit();
 		final Response response = acceptJsonUTF8English().post(Entity.json(persistedEntity));
 		assertStatusCodeIs(Status.CONFLICT.getStatusCode(), response);
 	}
 
 	@Test
-	public void testPutAlreadyExists() throws DaoException {
+	public void testPutAlreadyExists() throws Exception {
 		final E c = makeEntity();
+		begin();
 		final E persistedEntity = dao.persist(c);
+		commit();
 		final Response response = acceptJsonUTF8English(c.getId().toString() + 1).put(Entity.json(persistedEntity));
 		assertStatusCodeIs(Status.FORBIDDEN.getStatusCode(), response);
 	}
@@ -249,21 +282,25 @@ public abstract class AbstractResourceIT<E extends io.github.oliviercailloux.ope
 	public void testPutPersist() {
 		final E c = makeEntity();
 		final Response response = acceptJsonUTF8English(Long.toString(RAND.nextLong())).put(Entity.json(c));
-		assertStatusIsCreated(response);
+		assertStatusIsForbidden(response);
 	}
 
 	@Test
-	public void testPutMerge() throws DaoException {
+	public void testPutMerge() throws Exception {
 		final E c = makeEntity();
+		begin();
 		final E persistedEntity = dao.persist(c);
+		commit();
 		final Response response = acceptJsonUTF8English(c.getId().toString()).put(Entity.json(persistedEntity));
 		assertStatusIsNoContent(response);
 	}
 
 	@Test
-	public void testDelete() throws DaoException {
+	public void testDelete() throws Exception {
 		final E c = makeEntity();
+		begin();
 		final E persistedEntity = dao.persist(c);
+		commit();
 		final Response response = acceptJsonUTF8English(persistedEntity.getId().toString()).delete();
 		assertStatusIsNoContent(response);
 		assertNull("entity was not removed", dao.findOne(persistedEntity.getId()));
